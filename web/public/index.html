@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notes</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #111827; color: #f9fafb;
+           max-width: 600px; margin: 2rem auto; padding: 0 1rem; }
+    form { display: flex; gap: 0.5rem; }
+    input { flex: 1; padding: 0.5rem; border-radius: 6px; border: 1px solid #374151;
+            background: #1f2937; color: inherit; }
+    button { padding: 0.5rem 1rem; border: 0; border-radius: 6px; cursor: pointer; }
+    li { display: flex; justify-content: space-between; align-items: center;
+         background: #1f2937; margin: 0.5rem 0; padding: 0.5rem 0.75rem; border-radius: 6px; }
+    ul { list-style: none; padding: 0; }
+    small { color: #9ca3af; }
+  </style>
+</head>
+<body>
+  <h1>Notes</h1>
+  <form id="form">
+    <input id="text" placeholder="Write a note..." maxlength="2000" required>
+    <button>Add</button>
+  </form>
+  <ul id="list"></ul>
+
+  <script>
+    const list = document.getElementById("list");
+
+    async function load() {
+      const res = await fetch("/api/notes");
+      const notes = await res.json();
+      list.innerHTML = "";
+      for (const n of notes) {
+        const li = document.createElement("li");
+        const span = document.createElement("span");
+        span.textContent = n.text;
+        const small = document.createElement("small");
+        small.textContent = n.created_at;
+        const del = document.createElement("button");
+        del.textContent = "Delete";
+        del.onclick = async () => {
+          await fetch("/api/notes/" + n.id, { method: "DELETE" });
+          load();
+        };
+        li.append(span, small, del);
+        list.append(li);
+      }
+    }
+
+    document.getElementById("form").onsubmit = async (e) => {
+      e.preventDefault();
+      const input = document.getElementById("text");
+      await fetch("/api/notes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: input.value }),
+      });
+      input.value = "";
+      load();
+    };
+
+    load();
+  </script>
+</body>
+</html>
